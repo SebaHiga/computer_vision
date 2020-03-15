@@ -3,6 +3,7 @@
 #include <iostream>
 
 using namespace cv;
+using namespace std;
 
 void searchByColor(cv::InputArray hsv, cv::OutputArray out, Scalar lower, Scalar upper);
 
@@ -40,12 +41,11 @@ void searchByColor(cv::InputArray hsv, cv::OutputArray out, Scalar lower, Scalar
     Mat filtered, kernel, coord;
 
     cv::inRange(hsv.getMat(), lower, upper, filtered);
-
     kernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3), cv::Point(1, 1));
-
     cv::morphologyEx(filtered, filtered, cv::MORPH_CLOSE, kernel);
 
-    // findNonZero(filtered, coord);
+    cv::Moments m = moments(filtered, true);
+    cv::Point p(m.m10/m.m00, m.m01/m.m00);
 
     out.assign(filtered);
 }
