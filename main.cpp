@@ -1,6 +1,10 @@
 #include "opencv2/opencv.hpp"
+#include "geometry.hpp"
+#include <iostream>
 
 using namespace cv;
+
+void searchByColor(cv::InputArray hsv, cv::OutputArray out, Scalar lower, Scalar upper);
 
 int main(int, char**){
     VideoCapture cam(0); // open the default camera
@@ -12,14 +16,36 @@ int main(int, char**){
     namedWindow("frame",1);
     while(1)
     {
-        Mat frame;
+        Mat frame, hsv, filtered;
         cam >> frame; // get a new frame from camera
-        // cvtColor(frame, frame, COLOR_BGR2GRAY);
-        // GaussianBlur(frame, frame, Size(7,7), 1.5, 1.5);
-        // Canny(frame, frame, 0, 30, 3);
-        imshow("frame", frame);
+
+        Scalar lower_filter(99, 136, 49), upper_filter(153, 255, 255);
+
+        cvtColor(frame, hsv, COLOR_BGR2HSV);
+
+        searchByColor(frame, filtered, lower_filter, upper_filter);
+        // inRange(hsv, lower_filter, upper_filter, filtered);
+
+        //flipping image
+        flip(filtered, filtered, 1);
+
+        imshow("frame", filtered);
         if(waitKey(1) >= 0) break;
     }
     // the camera will be deinitialized automatically in VideoCapture destructor
     return 0;
+}
+
+void searchByColor(cv::InputArray hsv, cv::OutputArray out, Scalar lower, Scalar upper){
+    Mat filtered, kernel, coord;
+
+    cv::inRange(hsv.getMat(), lower, upper, filtered);
+
+    kernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3), cv::Point(1, 1));
+
+    cv::morphologyEx(filtered, filtered, cv::MORPH_CLOSE, kernel);
+
+    // findNonZero(filtered, coord);
+
+    out.assign(filtered);
 }
