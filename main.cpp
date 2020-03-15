@@ -5,14 +5,16 @@
 using namespace cv;
 using namespace std;
 
-void searchByColor(cv::InputArray hsv, cv::OutputArray out, Scalar lower, Scalar upper);
+geom::Point searchByColor(cv::InputArray hsv, cv::OutputArray out, Scalar lower, Scalar upper);
 
 int main(int, char**){
     VideoCapture cam(0); // open the default camera
 
     if(!cam.isOpened())  // check if we succeeded
         return -1;
+    
     Mat frame;
+    geom::Point dot;
 
     namedWindow("frame",1);
     while(1)
@@ -20,32 +22,38 @@ int main(int, char**){
         Mat frame, hsv, filtered;
         cam >> frame; // get a new frame from camera
 
-        Scalar lower_filter(99, 136, 49), upper_filter(153, 255, 255);
+        Scalar lower_filter(109, 104, 54), upper_filter(128, 255, 255);
 
         cvtColor(frame, hsv, COLOR_BGR2HSV);
 
-        searchByColor(frame, filtered, lower_filter, upper_filter);
-        // inRange(hsv, lower_filter, upper_filter, filtered);
+        dot = searchByColor(hsv, filtered, lower_filter, upper_filter);
 
-        //flipping image
-        flip(filtered, filtered, 1);
+        circle(frame, cv::Point(dot.top, dot.left), 5, Scalar(255,0,0), -1);
 
-        imshow("frame", filtered);
+        imshow("frame", frame);
         if(waitKey(1) >= 0) break;
     }
     // the camera will be deinitialized automatically in VideoCapture destructor
     return 0;
 }
 
-void searchByColor(cv::InputArray hsv, cv::OutputArray out, Scalar lower, Scalar upper){
-    Mat filtered, kernel, coord;
+geom::Point searchByColor(cv::InputArray hsv, cv::OutputArray out, Scalar lower, Scalar upper){
+    Mat filtered, kernel, coord, crop;
 
     cv::inRange(hsv.getMat(), lower, upper, filtered);
-    kernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3), cv::Point(1, 1));
+    kernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(1, 1), cv::Point(0, 0));
     cv::morphologyEx(filtered, filtered, cv::MORPH_CLOSE, kernel);
 
     cv::Moments m = moments(filtered, true);
     cv::Point p(m.m10/m.m00, m.m01/m.m00);
 
+    cv::Rect roi(p.x - 100, p.y - 100, 200, 200);
+
+    crop = filtered(roi);
+
+    m = moments(crop, true);
+    cv::Point dot(m.m10/m.m00, m.m01/m.m00);
+
     out.assign(filtered);
+    return geom::Point(p.x + dot.x - 100, p.y + dot.y - 100);
 }
