@@ -22,10 +22,13 @@ int main(int, char**){
 
     namedWindow("frame", cv::WINDOW_AUTOSIZE);
     namedWindow("detection", cv::WINDOW_AUTOSIZE);
+
     while(1)
     {
         Mat frame, hsv, filtered;
         cam >> frame; // get a new frame from camera
+
+        flip(frame, frame, 1);
 
         Scalar lower_filter(109, 104, 54), upper_filter(128, 255, 255);
 
@@ -56,6 +59,9 @@ int main(int, char**){
 
             line(frame, track.objects[i].position.cv_getPoint(),
                      speedLine, Scalar(0, 0, 255), 4);
+
+            circle(frame, track.objects[i].position.cv_getPoint(),
+            60, Scalar(0, 255, 255), 2, 4);
         }
 
         imshow("frame", frame);
@@ -67,8 +73,10 @@ int main(int, char**){
 }
 
 geom::Point searchByColor(cv::InputArray hsv, cv::OutputArray out, Scalar lower, Scalar upper){
-    Mat filtered, kernel, coord, crop;
-    int const margin = 350;
+    cv::Mat filtered, kernel, coord, segmented;
+
+    int margin = 500;
+    int const max_segment = 5;
 
     cv::inRange(hsv.getMat(), lower, upper, filtered);
     kernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(1, 1), cv::Point(0, 0));
@@ -79,8 +87,6 @@ geom::Point searchByColor(cv::InputArray hsv, cv::OutputArray out, Scalar lower,
 
 
     out.assign(filtered);
-    // return geom::Point(p.x, p.y);
-
 
     cv::Mat nonzero;
     findNonZero(filtered, nonzero);
@@ -91,37 +97,48 @@ geom::Point searchByColor(cv::InputArray hsv, cv::OutputArray out, Scalar lower,
     }
 
     int width = margin, height = margin;
-    // if out of boundaries, correct roi margins
-    if( filtered.cols < (p.x - margin/2 + margin ) ){
-        width = margin - 2 * (p.x + margin/2 - filtered.cols);
+
+    for (int i = 1; i < max_segment; i++){
+        // if out of boundaries, correct roi margins
+        margin *= 0.7;
+        width = margin;
+        height = margin;
+
+        if( filtered.cols < (p.x - margin/2 + margin ) ){
+            width = margin - 2 * (p.x + margin/2 - filtered.cols);
+        }
+        else if(( p.x - margin/2 ) < 0){
+            width = margin - 2 * (margin/2 - p.x);
+        }
+
+        if( filtered.rows < (p.y - margin/2 + margin ) ){
+            height = margin - 2 * (p.y + margin/2 - filtered.rows);
+        }
+        else if(( p.y - margin/2 ) < 0){
+            height = margin - 2 * (margin/2 - p.y);
+        }
+
+        // Segment image and reanalyze 
+        // Creating mask
+        cv::Mat mask(filtered.rows, filtered.cols, CV_8UC1, Scalar(255, 255, 255));
+        cv::Rect roi(p.x - (width/2), p.y - (height/2), width, height);
+        rectangle(mask, roi, Scalar(0, 0, 0), -1);
+
+        // Segment on image
+        subtract(filtered, mask, segmented);
+
+        findNonZero(segmented, nonzero);
+
+        if(nonzero.total() < 10){
+            return geom::Point(0, 0);
+        }
+
+        m = moments(segmented, true);
+        p.x = m.m10/m.m00;
+        p.y = m.m01/m.m00;
+
+        rectangle(filtered, roi, Scalar(255, 255, 0));
     }
-    else if(( p.x - margin/2 ) < 0){
-        width = margin - 2 * (margin/2 - p.x);
-    }
 
-    if( filtered.rows < (p.y - margin/2 + margin ) ){
-        height = margin - 2 * (p.y + margin/2 - filtered.rows);
-    }
-    else if(( p.y - margin/2 ) < 0){
-        height = margin - 2 * (margin/2 - p.y);
-    }
-
-
-    // crop image and reanalyze
-    cv::Rect roi(p.x - (width/2), p.y - (height/2), width, height);
-    crop = filtered(roi);
-
-    // if there's not much information quit
-    findNonZero(crop, nonzero);
-
-    if(nonzero.total() < 150){
-        return geom::Point(0, 0);
-    }
-
-    m = moments(crop, true);
-    cv::Point dot(m.m10/m.m00, m.m01/m.m00);
-
-    rectangle(filtered, roi, Scalar(255, 255, 0));
-
-    return geom::Point(p.x + dot.x - (width/2), p.y + dot.y - (height/2));
+    return geom::Point(p.x, p.y);
 }

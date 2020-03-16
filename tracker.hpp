@@ -39,7 +39,7 @@ public:
             position.update(speed);
 
             if(speed.module){
-                speed.module -= 1;
+                speed.module *= 0.9;
             }
 
             return false;
@@ -73,7 +73,7 @@ public:
 
 class Tracker {
 private:
-    static const int maxRange = 200;
+    static const int maxRange = 100;
 
 public:
     int count;
