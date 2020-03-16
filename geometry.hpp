@@ -27,6 +27,12 @@ namespace geom {
         }
 
         Vector getVelocity (Point p){
+            // if new vector then return 0 vel
+            if(!top || !left){
+                geom::Vector vect{.angle = 0, .module = 0};
+                return vect;
+            }
+
             Vector autop;
 
             autop.module = hypot(p.top - top, p.left - left);
@@ -42,6 +48,22 @@ namespace geom {
         void update (Point point){
             top = point.top;
             left = point.left;
+        }
+
+        void update (Vector speed){
+            top = top + speed.module * sin(speed.angle);
+            left = left + speed.module * cos(speed.angle);
+        }
+
+        void operator=(Point p){
+            top = p.top;
+            left = p.left;
+        }
+
+        // opencv format
+
+        cv::Point cv_getPoint(){
+            return cv::Point(top, left);
         }
     };
 }

@@ -8,7 +8,7 @@
 using namespace std;
 using namespace geom;
 
-#define MAX_DISS 100
+#define MAX_DISS 30
 
 //max range
 
@@ -19,29 +19,59 @@ public:
     bool updated;
 
     geom::Point position;
+    geom::Point position_old;
+
     geom::Vector speed;
 
     Object();
 
     Object(int id, geom::Point pos) : id(id), position(pos), updated(true), maxDiss(MAX_DISS){
-
+        speed.module = 0;
+        speed.angle = 0;
     }
 
     ~Object(){};
     bool dissapeared(){
         if(maxDiss){
             maxDiss--;
+            position_old = position;
+
+            position.update(speed);
+
+            if(speed.module){
+                speed.module -= 1;
+            }
+
             return false;
         }
         else{
             return true;
         }
     }
+
+    void update(geom::Point p){
+        geom::Vector vel = position.getVelocity(p);
+        
+        vel.module = (vel.module + speed.module)/2;
+        vel.angle = (vel.angle + speed.angle)/2;        
+
+        speed = vel;
+
+        position_old = position;
+        position = p;
+
+        updated = true;
+    }
+
+    geom::Point getSpeedPoint(){
+        return geom::Point(position.top + speed.module * sin(speed.angle) * 2,
+                            position.left + speed.module * cos(speed.angle) * 2);
+    }
 };
 
 class Tracker {
 private:
-    static const int maxRange = 200;
+    static const int maxRange = 100;
 
 public:
     int count;
@@ -57,23 +87,20 @@ public:
 int Tracker::update(vector<geom::Point> points){
     vector<Object> old_objects = objects;
 
-    if(objects.size() == 0){
-        objects.push_back(Object(count, points[0]));
-        count = 0;
-    }
-    
     for (int i = 0; i < objects.size(); i++){
         objects[i].updated = false;
     }
 
     for (int i = 0; i < points.size(); i++){
         int index;
-        float minDist, dist;
+        float minDist = 999999, dist;
 
-        minDist = points[i].getDistance(objects[0].position);
-        index = 0;
+        // find minimun distance for each updated object
+        for(int j = 0; j < objects.size(); j++){
+            if(objects[i].updated){
+                continue;
+            }
 
-        for(int j = 1; j < objects.size(); j++){
             dist = points[i].getDistance(objects[j].position);
 
             if (dist < minDist){
@@ -82,16 +109,21 @@ int Tracker::update(vector<geom::Point> points){
             }       
         }
 
+        // refresh positions or add objects
         if(minDist < maxRange){
-            objects[index].position.update(points[i]);
-            objects[index].updated = true;
+            objects[index].update(points[i]);
+        }
+        else if(objects.size() == 0){
+            objects.push_back(Object(count, points[i]));
+            count = 1;
         }
         else{
             objects.push_back(Object(count, points[i]));
-            count++;
+            count++;  
         }
     }
 
+    // compute lost objects
     for (int i = 0; i < objects.size(); i++){
         if(!objects[i].updated){
             if(objects[i].dissapeared()){
@@ -101,7 +133,6 @@ int Tracker::update(vector<geom::Point> points){
             }
         }
     }
-
 
     return 1;
 }

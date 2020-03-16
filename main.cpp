@@ -35,23 +35,28 @@ int main(int, char**){
 
         vector<geom::Point> points; points.push_back(geom::Point(p));
 
-        track.update(points);
-
         if(p.originDistance() > 100){
-            for (int i = 0; i < track.count; i++){
-                stringstream strstr;
-
-                strstr << track.objects[i].id;
-                string str = strstr.str();
-
-                putText(frame, str,
-                        cv::Point(
-                        track.objects[i].position.top, track.objects[i].position.left),
-                        5, 3, Scalar(255, 255, 0), 2);
-            }
+            track.update(points);
         }
 
-        printf("Count: %d\n", track.count);
+
+        for (int i = 0; i < track.count; i++){
+            stringstream ss;
+            ss << track.objects[i].id;
+            string str;
+            str = ss.str();
+
+            putText(frame, str,
+                    cv::Point(
+                    track.objects[i].position.top, track.objects[i].position.left),
+                    2, 1, Scalar(255, 0, 0), 2);
+
+            cv::Point speedLine(track.objects[i].getSpeedPoint().cv_getPoint());
+
+            line(frame, track.objects[i].position.cv_getPoint(),
+                     speedLine, Scalar(0, 0, 255), 4);
+        }
+
         imshow("frame", frame);
         if(waitKey(1) >= 0) break;
     }
@@ -70,12 +75,15 @@ geom::Point searchByColor(cv::InputArray hsv, cv::OutputArray out, Scalar lower,
     cv::Moments m = moments(filtered, true);
     cv::Point p(m.m10/m.m00, m.m01/m.m00);
 
-    cv::Rect roi(p.x - (margin/2), p.y - (margin/2), margin, margin);
 
+    out.assign(filtered);
+    return geom::Point(p.x, p.y);
+
+
+    cv::Rect roi(p.x - (margin/2), p.y - (margin/2), margin, margin);
     crop = filtered(roi);
 
     cv::Mat nonzero;
-
     findNonZero(crop, nonzero);
 
     if(nonzero.total() < 150){
@@ -85,6 +93,5 @@ geom::Point searchByColor(cv::InputArray hsv, cv::OutputArray out, Scalar lower,
     m = moments(crop, true);
     cv::Point dot(m.m10/m.m00, m.m01/m.m00);
 
-    out.assign(filtered);
     return geom::Point(p.x + dot.x - (margin/2), p.y + dot.y - (margin/2));
 }
