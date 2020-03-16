@@ -20,7 +20,8 @@ int main(int, char**){
     geom::Point p;
     Tracker track;
 
-    namedWindow("frame",1);
+    namedWindow("frame", cv::WINDOW_AUTOSIZE);
+    namedWindow("detection", cv::WINDOW_AUTOSIZE);
     while(1)
     {
         Mat frame, hsv, filtered;
@@ -58,7 +59,8 @@ int main(int, char**){
         }
 
         imshow("frame", frame);
-        if(waitKey(1) >= 0) break;
+        imshow("detection", filtered);
+        if(waitKey(1) == 27) break;
     }
     // the camera will be deinitialized automatically in VideoCapture destructor
     return 0;
