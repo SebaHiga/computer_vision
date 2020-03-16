@@ -61,6 +61,8 @@ public:
         position = p;
 
         updated = true;
+
+        maxDiss = MAX_DISS;
     }
 
     geom::Point getSpeedPoint(){
@@ -71,7 +73,7 @@ public:
 
 class Tracker {
 private:
-    static const int maxRange = 100;
+    static const int maxRange = 200;
 
 public:
     int count;

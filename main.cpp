@@ -68,7 +68,7 @@ int main(int, char**){
 
 geom::Point searchByColor(cv::InputArray hsv, cv::OutputArray out, Scalar lower, Scalar upper){
     Mat filtered, kernel, coord, crop;
-    int const margin = 200;
+    int const margin = 350;
 
     cv::inRange(hsv.getMat(), lower, upper, filtered);
     kernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(1, 1), cv::Point(0, 0));
