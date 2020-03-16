@@ -7,7 +7,7 @@ namespace geom {
 
     typedef struct _vector{
         float angle;
-        int module;
+        float module;
     }Vector;
 
     class Point {
