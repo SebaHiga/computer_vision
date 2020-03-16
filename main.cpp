@@ -7,7 +7,6 @@
 #include <string>
 
 using namespace cv;
-using namespace std;
 
 geom::Point searchByColor(cv::InputArray hsv, cv::OutputArray out, Scalar lower, Scalar upper);
 
@@ -67,7 +66,7 @@ int main(int, char**){
 
 geom::Point searchByColor(cv::InputArray hsv, cv::OutputArray out, Scalar lower, Scalar upper){
     Mat filtered, kernel, coord, crop;
-    int const margin = 50;
+    int const margin = 200;
 
     cv::inRange(hsv.getMat(), lower, upper, filtered);
     kernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(1, 1), cv::Point(0, 0));
@@ -80,10 +79,37 @@ geom::Point searchByColor(cv::InputArray hsv, cv::OutputArray out, Scalar lower,
     out.assign(filtered);
     // return geom::Point(p.x, p.y);
 
-    cv::Rect roi(p.x - (margin/2), p.y - (margin/2), margin, margin);
-    crop = filtered(roi);
 
     cv::Mat nonzero;
+    findNonZero(filtered, nonzero);
+
+    // if there's not much information quit
+    if(nonzero.total() < 200){
+        return geom::Point(0, 0);
+    }
+
+    int width = margin, height = margin;
+    // if out of boundaries, correct roi margins
+    if( filtered.cols < (p.x - margin/2 + margin ) ){
+        width = margin - 2 * (p.x + margin/2 - filtered.cols);
+    }
+    else if(( p.x - margin/2 ) < 0){
+        width = margin - 2 * (margin/2 - p.x);
+    }
+
+    if( filtered.rows < (p.y - margin/2 + margin ) ){
+        height = margin - 2 * (p.y + margin/2 - filtered.rows);
+    }
+    else if(( p.y - margin/2 ) < 0){
+        height = margin - 2 * (margin/2 - p.y);
+    }
+
+
+    // crop image and reanalyze
+    cv::Rect roi(p.x - (width/2), p.y - (height/2), width, height);
+    crop = filtered(roi);
+
+    // if there's not much information quit
     findNonZero(crop, nonzero);
 
     if(nonzero.total() < 150){
@@ -93,5 +119,7 @@ geom::Point searchByColor(cv::InputArray hsv, cv::OutputArray out, Scalar lower,
     m = moments(crop, true);
     cv::Point dot(m.m10/m.m00, m.m01/m.m00);
 
-    return geom::Point(p.x + dot.x - (margin/2), p.y + dot.y - (margin/2));
+    rectangle(filtered, roi, Scalar(255, 255, 0));
+
+    return geom::Point(p.x + dot.x - (width/2), p.y + dot.y - (height/2));
 }

@@ -71,7 +71,7 @@ public:
 
 class Tracker {
 private:
-    static const int maxRange = 200;
+    static const int maxRange = 100;
 
 public:
     int count;
