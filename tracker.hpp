@@ -71,7 +71,7 @@ public:
 
 class Tracker {
 private:
-    static const int maxRange = 100;
+    static const int maxRange = 200;
 
 public:
     int count;
@@ -81,6 +81,8 @@ public:
 
     // returns the total difference of tracked objects after updating
     int update(vector<geom::Point> points);
+    void addObject(geom::Point p);
+    int getNewID();
 };
 
 
@@ -113,13 +115,8 @@ int Tracker::update(vector<geom::Point> points){
         if(minDist < maxRange){
             objects[index].update(points[i]);
         }
-        else if(objects.size() == 0){
-            objects.push_back(Object(count, points[i]));
-            count = 1;
-        }
         else{
-            objects.push_back(Object(count, points[i]));
-            count++;  
+            addObject(points[i]); 
         }
     }
 
@@ -135,6 +132,43 @@ int Tracker::update(vector<geom::Point> points){
     }
 
     return 1;
+}
+
+void Tracker::addObject(geom::Point p){
+    if(objects.size() == 0){
+        objects.push_back(Object(getNewID(), p));
+        count = 1;  
+    }
+    else{
+        objects.push_back(Object(getNewID(), p));
+        count++;  
+    }
+}
+
+int Tracker::getNewID(){
+    vector<int> vct;
+    int id;
+    bool used;
+
+    for (int i = 0; i < objects.size(); i++){
+        vct.push_back(objects[i].id);
+    }
+
+    for (id = 0; id < 100; id++){
+        used = false;
+
+        for(int i = 0; i < vct.size(); i++){
+            if(id == vct[i]){
+                used = true;
+            }
+        }
+
+        if(!used){
+            break;
+        }
+    }
+
+    return id;
 }
 
 #endif
