@@ -33,12 +33,13 @@ int main(int, char**){
 
         p = searchByColor(hsv, filtered, lower_filter, upper_filter);
 
-        vector<geom::Point> points; points.push_back(geom::Point(p));
+        vector<geom::Point> points;
 
         if(p.originDistance() > 100){
-            track.update(points);
+            points.push_back(geom::Point(p));
         }
 
+        track.update(points);
 
         for (int i = 0; i < track.count; i++){
             stringstream ss;
@@ -66,7 +67,7 @@ int main(int, char**){
 
 geom::Point searchByColor(cv::InputArray hsv, cv::OutputArray out, Scalar lower, Scalar upper){
     Mat filtered, kernel, coord, crop;
-    int const margin = 100;
+    int const margin = 50;
 
     cv::inRange(hsv.getMat(), lower, upper, filtered);
     kernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(1, 1), cv::Point(0, 0));
@@ -77,8 +78,7 @@ geom::Point searchByColor(cv::InputArray hsv, cv::OutputArray out, Scalar lower,
 
 
     out.assign(filtered);
-    return geom::Point(p.x, p.y);
-
+    // return geom::Point(p.x, p.y);
 
     cv::Rect roi(p.x - (margin/2), p.y - (margin/2), margin, margin);
     crop = filtered(roi);
