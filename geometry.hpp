@@ -1,0 +1,49 @@
+#ifndef __GEOMETRY_HPP__
+#define __GEOMETRY_HPP__
+
+#include <math.h>
+
+namespace geom {
+
+    typedef struct _vector{
+        float angle;
+        int module;
+    }Vector;
+
+    class Point {
+    public:
+        int top, left;
+
+        Point() : top(0), left(0){
+
+        }
+
+        Point(int _top, int _left) : top(_top), left(_left){
+
+        }
+
+        float getDistance (Point p){
+            return hypot(p.top-top, p.left-left);
+        }
+
+        Vector getVelocity (Point p){
+            Vector autop;
+
+            autop.module = hypot(p.top - top, p.left - left);
+            autop.angle = atan2f32(p.top - top, p.left - left);
+
+            return autop;
+        }
+
+        float originDistance (void){
+            return hypot(top, left);
+        }
+
+        void update (Point point){
+            top = point.top;
+            left = point.left;
+        }
+    };
+}
+
+#endif
