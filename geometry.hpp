@@ -13,12 +13,13 @@ namespace geom {
     class Point {
     public:
         int top, left;
+        bool updated;
 
-        Point() : top(0), left(0){
+        Point() : top(0), left(0), updated(true){
 
         }
 
-        Point(int _top, int _left) : top(_top), left(_left){
+        Point(int _top, int _left) : top(_top), left(_left), updated(true){
 
         }
 

@@ -110,12 +110,49 @@ int Tracker::update(vector<geom::Point> points){
     }
 
     for (int i = 0; i < points.size(); i++){
+        points[i].updated = false;
+    }
+
+    // valid priority analysis
+    for (int i = 0; i < points.size(); i++){
+        if(points[i].updated){
+            continue;
+        }
+
         int index = 0;
         float minDist = 999999, dist;
 
         // find minimun distance for each updated object
         for(int j = 0; j < objects.size(); j++){
-            if(!objects[j].updated){
+            if(!objects[j].updated && objects[j].valid){
+                dist = points[i].getDistance(objects[j].position);
+
+                if (dist < minDist){
+                    minDist = dist;
+                    index = j;
+                }
+            }
+        }
+
+        // refresh positions or add objects
+        if(minDist < maxRange){
+            objects[index].update(points[i]);
+            points[i].updated = true;
+        }
+    }
+
+    // invalid object analysis
+    for (int i = 0; i < points.size(); i++){
+        if(points[i].updated){
+            continue;
+        }
+
+        int index = 0;
+        float minDist = 999999, dist;
+
+        // find minimun distance for each updated object
+        for(int j = 0; j < objects.size(); j++){
+            if(!objects[j].updated && !objects[j].valid){
                 dist = points[i].getDistance(objects[j].position);
 
                 if (dist < minDist){
@@ -132,6 +169,7 @@ int Tracker::update(vector<geom::Point> points){
         else{
             addObject(points[i]);
         }
+        points[i].updated = true;
     }
 
     // compute lost objects
