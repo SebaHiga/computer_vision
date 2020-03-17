@@ -9,6 +9,7 @@ using namespace std;
 using namespace geom;
 
 #define MAX_DISS 30
+#define MIN_APP 10
 
 //max range
 
@@ -18,6 +19,9 @@ public:
     int maxDiss;
     bool updated;
 
+    int minAppearance;
+    bool valid;
+
     geom::Point position;
     geom::Point position_old;
 
@@ -25,28 +29,32 @@ public:
 
     Object();
 
-    Object(int id, geom::Point pos) : id(id), position(pos), updated(true), maxDiss(MAX_DISS){
+    Object(int id, geom::Point pos) :   id(id), position(pos), updated(true),
+                                        maxDiss(MAX_DISS), minAppearance(MIN_APP), valid(false){
         speed.module = 0;
         speed.angle = 0;
     }
 
     ~Object(){};
     bool dissapeared(){
-        if(maxDiss){
-            maxDiss--;
-            position_old = position;
+        if(valid){
+            if(maxDiss){
+                maxDiss--;
+                position_old = position;
 
-            position.update(speed);
+                position.update(speed);
 
-            if(speed.module){
-                speed.module *= 1;
+                if(speed.module){
+                    speed.module *= 1;
+                }
+
+                return false;
             }
-
-            return false;
+            else{
+                return true;
+            }
         }
-        else{
-            return true;
-        }
+        return true;
     }
 
     void update(geom::Point p){
@@ -63,6 +71,13 @@ public:
         updated = true;
 
         maxDiss = MAX_DISS;
+
+        if(minAppearance){
+            minAppearance--;
+            if(!minAppearance){
+                valid = true;
+            }
+        }
     }
 
     geom::Point getSpeedPoint(){

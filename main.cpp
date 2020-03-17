@@ -57,23 +57,25 @@ int main(int, char**){
         track.update(points);
 
         for (int i = 0; i < track.objects.size(); i++){
-            stringstream ss;
-            ss << track.objects[i].id;
-            string str;
-            str = ss.str();
+            if(track.objects[i].valid){
+                stringstream ss;
+                ss << track.objects[i].id;
+                string str;
+                str = ss.str();
 
-            putText(frame, str,
-                    cv::Point(
-                    track.objects[i].position.top, track.objects[i].position.left),
-                    2, 1, Scalar(255, 0, 0), 2);
+                putText(frame, str,
+                        cv::Point(
+                        track.objects[i].position.top, track.objects[i].position.left),
+                        2, 1, Scalar(255, 0, 0), 2);
 
-            cv::Point speedLine(track.objects[i].getSpeedPoint().cv_getPoint());
+                cv::Point speedLine(track.objects[i].getSpeedPoint().cv_getPoint());
 
-            line(frame, track.objects[i].position.cv_getPoint(),
-                     speedLine, Scalar(0, 0, 255), 4);
+                line(frame, track.objects[i].position.cv_getPoint(),
+                        speedLine, Scalar(0, 0, 255), 4);
 
-            circle(frame, track.objects[i].position.cv_getPoint(),
-            60, Scalar(0, 255, 255), 2, 4);
+                circle(frame, track.objects[i].position.cv_getPoint(),
+                60, Scalar(0, 255, 255), 2, 4);
+            }
         }
 
         add(f1, f2, filtered);
