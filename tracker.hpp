@@ -39,7 +39,7 @@ public:
             position.update(speed);
 
             if(speed.module){
-                speed.module *= 0.9;
+                speed.module *= 1;
             }
 
             return false;
@@ -52,7 +52,7 @@ public:
     void update(geom::Point p){
         geom::Vector vel = position.getVelocity(p);
         
-        vel.module = (vel.module + speed.module)/2;
+        vel.module = vel.module;
         vel.angle = (vel.angle + speed.angle)/2;        
 
         speed = vel;
@@ -76,9 +76,8 @@ private:
     static const int maxRange = 100;
 
 public:
-    int count;
     vector<Object> objects;
-    Tracker(void) : count(0){};
+    Tracker(void){};
     ~Tracker(){};
 
     // returns the total difference of tracked objects after updating
@@ -96,21 +95,19 @@ int Tracker::update(vector<geom::Point> points){
     }
 
     for (int i = 0; i < points.size(); i++){
-        int index;
+        int index = 0;
         float minDist = 999999, dist;
 
         // find minimun distance for each updated object
         for(int j = 0; j < objects.size(); j++){
-            if(objects[i].updated){
-                continue;
+            if(!objects[j].updated){
+                dist = points[i].getDistance(objects[j].position);
+
+                if (dist < minDist){
+                    minDist = dist;
+                    index = j;
+                }
             }
-
-            dist = points[i].getDistance(objects[j].position);
-
-            if (dist < minDist){
-                minDist = dist;
-                index = j;
-            }       
         }
 
         // refresh positions or add objects
@@ -118,7 +115,7 @@ int Tracker::update(vector<geom::Point> points){
             objects[index].update(points[i]);
         }
         else{
-            addObject(points[i]); 
+            addObject(points[i]);
         }
     }
 
@@ -128,7 +125,6 @@ int Tracker::update(vector<geom::Point> points){
             if(objects[i].dissapeared()){
                 objects.erase(objects.begin() + i);
                 i = 0;
-                count--;
             }
         }
     }
@@ -137,14 +133,7 @@ int Tracker::update(vector<geom::Point> points){
 }
 
 void Tracker::addObject(geom::Point p){
-    if(objects.size() == 0){
-        objects.push_back(Object(getNewID(), p));
-        count = 1;  
-    }
-    else{
-        objects.push_back(Object(getNewID(), p));
-        count++;  
-    }
+    objects.push_back(Object(getNewID(), p));
 }
 
 int Tracker::getNewID(){

@@ -25,7 +25,7 @@ int main(int, char**){
 
     while(1)
     {
-        Mat frame, hsv, filtered;
+        Mat frame, hsv, filtered, f1, f2;
         cam >> frame; // get a new frame from camera
 
         flip(frame, frame, 1);
@@ -34,17 +34,29 @@ int main(int, char**){
 
         cvtColor(frame, hsv, COLOR_BGR2HSV);
 
-        p = searchByColor(hsv, filtered, lower_filter, upper_filter);
-
         vector<geom::Point> points;
 
-        if(p.originDistance() > 100){
+        p = searchByColor(hsv, f1, Scalar(13, 128, 76), Scalar(27, 255, 255));
+
+        if(p.originDistance() > 0){
+            points.push_back(geom::Point(p));
+        }
+        
+        p = searchByColor(hsv, f2, lower_filter, upper_filter);
+
+        if(p.originDistance() > 0){
             points.push_back(geom::Point(p));
         }
 
+        // p = searchByColor(hsv, filtered, Scalar(69, 48, 48), Scalar(94, 255, 255));
+
+        // if(p.originDistance() > 100){
+        //     points.push_back(geom::Point(p));
+        // }
+
         track.update(points);
 
-        for (int i = 0; i < track.count; i++){
+        for (int i = 0; i < track.objects.size(); i++){
             stringstream ss;
             ss << track.objects[i].id;
             string str;
@@ -63,6 +75,8 @@ int main(int, char**){
             circle(frame, track.objects[i].position.cv_getPoint(),
             60, Scalar(0, 255, 255), 2, 4);
         }
+
+        add(f1, f2, filtered);
 
         imshow("frame", frame);
         imshow("detection", filtered);
@@ -92,7 +106,7 @@ geom::Point searchByColor(cv::InputArray hsv, cv::OutputArray out, Scalar lower,
     findNonZero(filtered, nonzero);
 
     // if there's not much information quit
-    if(nonzero.total() < 200){
+    if(nonzero.total() < 500){
         return geom::Point(0, 0);
     }
 
