@@ -63,18 +63,17 @@ int main(int, char**){
                 string str;
                 str = ss.str();
 
-                putText(frame, str,
-                        cv::Point(
-                        track.objects[i].position.top, track.objects[i].position.left),
-                        2, 1, Scalar(255, 0, 0), 2);
-
                 cv::Point speedLine(track.objects[i].getSpeedPoint().cv_getPoint());
 
                 line(frame, track.objects[i].position.cv_getPoint(),
                         speedLine, Scalar(0, 0, 255), 4);
 
                 circle(frame, track.objects[i].position.cv_getPoint(),
-                60, Scalar(0, 255, 255), 2, 4);
+                20, Scalar(0, 255, 255), 2, 4);
+                putText(frame, str,
+                        cv::Point(
+                        track.objects[i].position.top, track.objects[i].position.left),
+                        2, 1, Scalar(255, 0, 0), 2);
             }
         }
 

@@ -9,7 +9,7 @@ using namespace std;
 using namespace geom;
 
 #define MAX_DISS 30
-#define MIN_APP 10
+#define MIN_APP 5
 
 //max range
 
@@ -88,7 +88,7 @@ public:
 
 class Tracker {
 private:
-    static const int maxRange = 100;
+    static const int maxRange = 250;
 
 public:
     vector<Object> objects;
