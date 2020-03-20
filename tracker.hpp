@@ -4,6 +4,7 @@
 #include "geometry.hpp"
 #include <iostream>
 #include <vector>
+#include <stdlib.h>
 
 using namespace std;
 using namespace geom;
@@ -21,6 +22,8 @@ public:
     int maxDiss;
     bool updated;
 
+    int b, g, r;
+
     int minAppearance;
     bool valid;
 
@@ -37,6 +40,10 @@ public:
                                         maxDiss(MAX_DISS), minAppearance(MIN_APP), valid(false){
         speed.push_back(geom::Vector());
         trackline.push_back(pos);
+        b = rand() % 256;
+        g = rand() % 256;
+        r = rand() % 256;
+
     }
 
     ~Object(){};
@@ -105,6 +112,10 @@ public:
         return geom::Point(position.top + speed[speed.size()].module * sin(speed[speed.size()].angle) * 10,
                             position.left + speed[speed.size()].module * cos(speed[speed.size()].angle) * 10);
     }
+
+    cv::Scalar getColor(){
+        return cv::Scalar(b, g, r);
+    }
 };
 
 class Tracker {
@@ -124,8 +135,6 @@ public:
 
 
 int Tracker::update(vector<geom::Point> *points){
-    vector<Object> old_objects = objects;
-
     for (int i = 0; i < objects.size(); i++){
         objects[i].updated = false;
     }
