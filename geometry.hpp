@@ -5,10 +5,39 @@
 
 namespace geom {
 
-    typedef struct _vector{
+    class Vector{
+    public:
         float angle;
         float module;
-    }Vector;
+
+        Vector() : angle(0), module(0){};
+        ~Vector(){};
+
+        Vector update(Vector v){
+            module = (module + v.module)/2;
+            angle = (angle + v.angle)/2;  
+        }
+
+        void operator=(Vector v){
+            module = v.module;
+            angle = v.angle; 
+        }
+
+        void operator=(float num){
+            module = num;
+            angle = num; 
+        }
+
+        Vector operator/=(int div){
+            module /= div;
+            angle /= div; 
+        }
+
+        Vector operator+=(Vector v){
+            module += v.module;
+            angle += v.angle; 
+        }
+    };
 
     class Point {
     public:
@@ -30,16 +59,16 @@ namespace geom {
         Vector getVelocity (Point p){
             // if new vector then return 0 vel
             if(!top || !left){
-                geom::Vector vect{.angle = 0, .module = 0};
-                return vect;
+                Vector v;
+                return v;
             }
 
-            Vector autop;
+            Vector speed;
 
-            autop.module = hypot(p.top - top, p.left - left);
-            autop.angle = atan2f32(p.top - top, p.left - left);
+            speed.module = hypot(p.top - top, p.left - left);
+            speed.angle = atan2f32(p.top - top, p.left - left);
 
-            return autop;
+            return speed;
         }
 
         float originDistance (void){
@@ -67,6 +96,9 @@ namespace geom {
             return cv::Point(top, left);
         }
     };
+
+
+
 }
 
 #endif
