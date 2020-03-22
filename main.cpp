@@ -11,10 +11,18 @@
 using namespace cv;
 using json = nlohmann::json;
 
-vector<geom::Point> parseJSON(string str);
+vector<Object> parseJSON(string str);
 
-int main(int, char**){
-    VideoCapture cam("../videos/prueba.mp4"); // open the default camera
+int main(int argc, char** argv){
+    if(argc < 1){
+        printf("Please add a name file to interact.\n");
+        return 0;
+    }
+
+    string path_video = "../videos/" + string(argv[1]) + ".mp4";
+    string path_records = "../records/" + string(argv[1]) + ".txt";
+
+    VideoCapture cam(path_video); // open the default camera
 
     if(!cam.isOpened())  // check if we succeeded
         return -1;
@@ -25,7 +33,7 @@ int main(int, char**){
 
     namedWindow("frame", cv::WINDOW_AUTOSIZE);
 
-    std::ifstream file("../records/prueba.txt");
+    std::ifstream file(path_records);
 
     std::string line;
 
@@ -35,11 +43,14 @@ int main(int, char**){
         cam >> frame; // get a new frame from camera
 
         vector<geom::Point> points;
+        vector<Object> obj;
 
         // add function to parse json and add to points vector
-        points = parseJSON(line);
+        obj = parseJSON(line);
 
-        track.update(&points);
+        // track.update(&points);
+        track.update(&obj);
+
 
         for (int i = 0; i < track.objects.size(); i++){
             if(track.objects[i].valid){
@@ -48,26 +59,22 @@ int main(int, char**){
                 string str;
                 str = ss.str();
 
-                cv::Point speedLine(track.objects[i].getSpeedPoint().cv_getPoint());
+                // cv::Point speedLine(track.objects[i].getSpeedPoint().cv_getPoint());
 
                 // cv::line(frame, track.objects[i].position.cv_getPoint(),
                 //         speedLine, Scalar(0, 0, 255), 4);
 
-                cv::circle(frame, track.objects[i].position.cv_getPoint(),
-                        MAX_RANGE, Scalar(0, 255, 255), 2, 4);
+                // cv::circle(frame, track.objects[i].position.cv_getPoint(),
+                //         20, Scalar(0, 255, 255), 2, 4);
 
-                putText(frame, str,
-                        cv::Point(
-                        track.objects[i].position.top, track.objects[i].position.left),
-                        2, 1, Scalar(255, 255, 0), 2);
+                // putText(frame, str,
+                //         cv::Point(
+                //         track.objects[i].position.top, track.objects[i].position.left),
+                //         1, 1, Scalar(255, 255, 0), 2);
 
-                // for(int k = 0; k < track.objects[i].trackline.size(); k++){
-                //     cv::circle(frame, track.objects[i].trackline[k].cv_getPoint(),
-                //         1, Scalar(255, 0, 255), 2, 4);
-                // }
                 for(int k = 1; k < track.objects[i].trackline.size() - 1; k++){
                     cv::line(frame, track.objects[i].trackline[k-1].cv_getPoint(),
-                        track.objects[i].trackline[k].cv_getPoint(), Scalar(255, 0, 255), 2, 4);
+                        track.objects[i].trackline[k].cv_getPoint(), track.objects[i].getColor(), 3, 4);
                 }
             }
         }
@@ -79,27 +86,31 @@ int main(int, char**){
     return 0;
 }
 
-vector<geom::Point> parseJSON(string str){
+vector<Object> parseJSON(string str){
     json j = json::parse(str);
-    vector<geom::Point> points;
+    vector<Object> objs;
 
     for (json::iterator it = j.begin(); it != j.end(); ++it) {
         if(it.value()["class_id"] == 0){
-            int top, left, width, height;
+            int top, left, width, height, class_id, object_id;
 
             top = it.value()["box"]["top"];
             left = it.value()["box"]["left"];
             height = it.value()["box"]["width"];
             width = it.value()["box"]["height"];
 
+            class_id = it.value()["class_id"];
+            object_id = it.value()["object_id"];
+
             int center_top, center_left;
 
             center_top = (top + height/2);
             center_left = (left + width/2);
 
-            points.push_back(geom::Point(center_left, center_top));
+            objs.push_back( Object(class_id, object_id,
+                            geom::Point(center_left, center_top)) );
         }
     }
 
-    return points;
+    return objs;
 }

@@ -9,9 +9,9 @@
 using namespace std;
 using namespace geom;
 
-#define MAX_DISS 20
+#define MAX_DISS 1
 #define MIN_APP 4
-#define MAX_DOTS 30
+#define MAX_DOTS 60
 #define MAX_RANGE 55
 
 //max range
@@ -19,6 +19,7 @@ using namespace geom;
 class Object {
 public:
     int id;
+    int class_id;
     int maxDiss;
     bool updated;
 
@@ -36,7 +37,16 @@ public:
 
     Object();
 
-    Object(int id, geom::Point pos) :   id(id), position(pos), updated(true),
+    Object(int id, geom::Point pos) :   id(id), position(pos), updated(true), class_id(0),
+                                        maxDiss(MAX_DISS), minAppearance(MIN_APP), valid(false){
+        speed.push_back(geom::Vector());
+        trackline.push_back(pos);
+        b = rand() % 256;
+        g = rand() % 256;
+        r = rand() % 256;
+
+    }
+    Object(int class_id, int id, geom::Point pos) :   id(id), position(pos), updated(true), class_id(0),
                                         maxDiss(MAX_DISS), minAppearance(MIN_APP), valid(false){
         speed.push_back(geom::Vector());
         trackline.push_back(pos);
@@ -108,6 +118,18 @@ public:
         }
     }
 
+    void update(Object obj){
+        valid = true;
+        updated = true;
+        maxDiss = MAX_DISS;
+        position = obj.position;
+
+        trackline.push_back(obj.position);
+        if(trackline.size() > MAX_DOTS){
+            trackline.erase(trackline.begin());
+        }
+    }
+
     geom::Point getSpeedPoint(){
         return geom::Point(position.top + speed[speed.size()].module * sin(speed[speed.size()].angle) * 10,
                             position.left + speed[speed.size()].module * cos(speed[speed.size()].angle) * 10);
@@ -129,8 +151,12 @@ public:
 
     // returns the total difference of tracked objects after updating
     int update(vector<geom::Point> *points);
+    int update(vector<Object> *obj);
     void addObject(geom::Point p);
+    void addObject(Object obj);
     int getNewID();
+
+    bool isNew(int object_id);
 };
 
 
@@ -215,8 +241,63 @@ int Tracker::update(vector<geom::Point> *points){
     return 1;
 }
 
+int Tracker::update(vector<Object> *obj){
+    for(int i = 0; i < obj->size(); i++){
+        (*obj)[i].updated = false;
+        (*obj)[i].valid = true;
+    }
+
+    for(int i = 0; i < objects.size(); i++){
+        objects[i].updated = false;
+    }
+
+    // refresh
+    for(int i = 0; i < obj->size(); i++){
+        for(int k = 0; k < objects.size(); k++){
+            if(objects[k].id == (*obj)[i].id){
+                objects[k].update((*obj)[i]);
+                (*obj)[i].updated = true;
+            }
+        }
+    }
+
+    // check if it's new looping on outdated objects
+    for(int i = 0; i < obj->size(); i++){
+        // if it was not refreshed then it's a new object
+        if(!(*obj)[i].updated){
+            objects.push_back((*obj)[i]);
+        }
+    }
+
+    // compute dissappeared
+    for(int i = 0; i < objects.size(); i++){
+        if(!objects[i].updated){
+            if(objects[i].dissapeared()){
+                objects.erase(objects.begin() + i);
+                i = 0;
+            }
+        }
+    }
+
+    return 1;
+}
+
+bool Tracker::isNew(int object_id){
+    for (int i = 0; i < objects.size(); i++){
+        if(objects[i].id == object_id){
+            return false;
+        }
+    }
+
+    return true;
+}
+
 void Tracker::addObject(geom::Point p){
     objects.push_back(Object(getNewID(), p));
+}
+
+void Tracker::addObject(Object obj){
+    objects.push_back(obj);
 }
 
 int Tracker::getNewID(){
