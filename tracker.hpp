@@ -9,10 +9,10 @@
 using namespace std;
 using namespace geom;
 
-#define MAX_DISS 1
-#define MIN_APP 4
+#define MAX_DISS 30
+#define MIN_APP 5
 #define MAX_DOTS 60
-#define MAX_RANGE 55
+#define MAX_RANGE 20
 
 //max range
 
@@ -63,7 +63,7 @@ public:
                 maxDiss--;
                 position_old = position;
 
-                speed[speed.size()].module *= 0.5;
+                speed[speed.size()].module *= 0.9;
                 position.update(speed[speed.size()]);
                 trackline.push_back(position);
                 
@@ -131,8 +131,8 @@ public:
     }
 
     geom::Point getSpeedPoint(){
-        return geom::Point(position.top + speed[speed.size()].module * sin(speed[speed.size()].angle) * 10,
-                            position.left + speed[speed.size()].module * cos(speed[speed.size()].angle) * 10);
+        return geom::Point(position.top + speed[speed.size()].module * sin(speed[speed.size()].angle) * 4,
+                            position.left + speed[speed.size()].module * cos(speed[speed.size()].angle) * 4);
     }
 
     cv::Scalar getColor(){
