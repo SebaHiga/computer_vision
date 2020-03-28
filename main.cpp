@@ -33,7 +33,10 @@ int main(int argc, char** argv){
     geom::Point p;
     Tracker track;
 
+    int const resize_val = 2;
+
     namedWindow("frame", cv::WINDOW_AUTOSIZE);
+    namedWindow("filtered", cv::WINDOW_AUTOSIZE);
 
     // std::ifstream file(path_records);
 
@@ -55,7 +58,7 @@ int main(int argc, char** argv){
 
         // getPointsFromObject(0, &points, &obj);
 
-        points.push_back( searchByColor(hsv, filtered, Scalar(13, 128, 76), Scalar(27, 255, 255)) );
+        points.push_back( searchByColor(hsv, filtered, Scalar(109, 104, 54), Scalar(128, 255, 255)) );
 
 
         track.update(&points);
@@ -88,7 +91,12 @@ int main(int argc, char** argv){
             }
         }
 
+        resize(frame, frame, Size(frame.cols/resize_val, frame.rows/resize_val));
+        resize(filtered, filtered, Size(filtered.cols/resize_val, filtered.rows/resize_val));
+
         imshow("frame", frame);
+        imshow("filtered", filtered);
+
         if(waitKey(1) == 27) break;
     }
     // the camera will be deinitialized automatically in VideoCapture destructor
