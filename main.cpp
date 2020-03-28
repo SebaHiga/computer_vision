@@ -21,10 +21,10 @@ int main(int argc, char** argv){
         return 0;
     }
 
-    string path_video = "../videos/" + string(argv[1]) + ".mp4";
-    string path_records = "../records/" + string(argv[1]) + ".txt";
+    // string path_video = "../videos/" + string(argv[1]) + ".mp4";
+    // string path_records = "../records/" + string(argv[1]) + ".txt";
 
-    VideoCapture cam(path_video); // open the default camera
+    VideoCapture cam(0); // open the default camera
 
     if(!cam.isOpened())  // check if we succeeded
         return -1;
@@ -35,26 +35,31 @@ int main(int argc, char** argv){
 
     namedWindow("frame", cv::WINDOW_AUTOSIZE);
 
-    std::ifstream file(path_records);
+    // std::ifstream file(path_records);
 
-    std::string line;
+    // std::string line;
 
-    while(getline(file, line))
+    while(true)
     {
-        Mat frame;
+        Mat frame, hsv, filtered;
+
         cam >> frame; // get a new frame from camera
+        flip(frame, frame, 1);
+        cvtColor(frame, hsv, COLOR_BGR2HSV);
 
         vector<geom::Point> points;
-        vector<Object> obj;
+        // vector<Object> obj;
 
         // add function to parse json and add to points vector
-        obj = parseJSON(line);
+        // obj = parseJSON(line);
 
         // getPointsFromObject(0, &points, &obj);
 
-        // track.update(&points);
-        track.update(&obj);
+        points.push_back( searchByColor(hsv, filtered, Scalar(13, 128, 76), Scalar(27, 255, 255)) );
 
+
+        track.update(&points);
+        // track.update(&obj);
 
         for (int i = 0; i < track.objects.size(); i++){
             if(track.objects[i].valid){
@@ -63,13 +68,13 @@ int main(int argc, char** argv){
                 string str;
                 str = ss.str();
 
-                // cv::Point speedLine(track.objects[i].getSpeedPoint().cv_getPoint());
+                cv::Point speedLine(track.objects[i].getSpeedPoint().cv_getPoint());
 
-                // cv::line(frame, track.objects[i].position.cv_getPoint(),
-                //         speedLine, Scalar(0, 0, 255), 4);
+                cv::line(frame, track.objects[i].position.cv_getPoint(),
+                        speedLine, Scalar(0, 0, 255), 4);
 
-                // cv::circle(frame, track.objects[i].position.cv_getPoint(),
-                //         MAX_RANGE, Scalar(0, 0, 0), 2, 8);
+                cv::circle(frame, track.objects[i].position.cv_getPoint(),
+                        MAX_RANGE, Scalar(0, 0, 0), 2, 8);
 
                 putText(frame, str,
                         cv::Point(
