@@ -91,7 +91,7 @@ int main(int argc, char** argv){
             }
         }
 
-        resize(frame, frame, Size(frame.cols/resize_val, frame.rows/resize_val));
+        // resize(frame, frame, Size(frame.cols/resize_val, frame.rows/resize_val));
         resize(filtered, filtered, Size(filtered.cols/resize_val, filtered.rows/resize_val));
 
         imshow("frame", frame);
@@ -198,8 +198,14 @@ geom::Point searchByColor(cv::InputArray hsv, cv::OutputArray out, Scalar lower,
         p.x = m.m10/m.m00;
         p.y = m.m01/m.m00;
 
-        rectangle(filtered, roi, Scalar(255, 255, 0));
+        // rectangle(filtered, roi, Scalar(255, 255, 0));
     }
+
+    Mat points;
+    findNonZero(segmented, points);
+    Rect boundaries = boundingRect(points);
+
+    rectangle(filtered, boundaries, Scalar(255, 255, 0));
 
     return geom::Point(p.x, p.y);
 }
