@@ -37,8 +37,19 @@ public:
     static const int idX = 2; // X velocity
     static const int idY = 3; // Y velocity
 
-    using Vector = Eigen::Matrix<double, NUM_VARS, 1>;
-    using Matrix = Eigen::Matrix<double, NUM_VARS, NUM_VARS>;
+    Kalman(){
+        // Prediction matrices
+        F.setIdentity();
+        G.setZero();
+        Q.setIdentity();
+        P.setIdentity();
+
+        H <<    1, 0, 0, 0,
+                0, 1, 0, 0;
+
+        R <<    5, 0,
+                0, 5;
+    }
 
     Kalman(double iniX, double inidX, double iniY, double inidY){
         Xn(iX)  = iniX;
@@ -59,6 +70,13 @@ public:
                 0, 5;
     }
 
+    void init(double iniX, double iniY){
+        Xn(iX)  = iniX;
+        Xn(idX) = 0;
+        Xn(iY)  = iniY;
+        Xn(idY) = 0;
+    }
+
     // Prediction method for object tracking
     void predict(double dt){
         F(iX, idX) = dt;
@@ -72,12 +90,12 @@ public:
         G(idX, iX) = dt;
         G(idY, iY) = dt;
 
-        Q = G * 0.2 *G.transpose();
+        // Q = G * 0.2 *G.transpose();
 
         P  = F * P * F.transpose() + Q; // 0.2 as acceleration covariance
     }
 
-    void update(double x, double y){
+    void update(int x, int y){
         // K
         K = (P * H.transpose()) * (H * P * H.transpose() + R).inverse();
 
@@ -85,15 +103,15 @@ public:
         Zn <<   x,
                 y;
         Xn = Xn + K * (Zn - H * Xn);
+        std::cout << Zn << std::endl;
 
         // P
-        Eigen::Matrix<double, nz, nx> I;
+        Eigen::Matrix<double, nx, nx> I;
         P = P * (I.Identity() - K * H);
     }
 
-private:
-    Vector Xp; // X vector previous
-    Matrix Pp; // P matrix previous
-
-    const double m_accelVariance;
+    void getPosition(double *x, double *y){
+        *x = Xn(iX);
+        *y = Xn(iY);
+    }
 };

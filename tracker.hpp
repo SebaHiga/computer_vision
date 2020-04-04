@@ -5,6 +5,7 @@
 #include <iostream>
 #include <vector>
 #include <stdlib.h>
+#include "kalman.hpp"   
 
 using namespace std;
 using namespace geom;
@@ -12,7 +13,7 @@ using namespace geom;
 #define MAX_DISS 30
 #define MIN_APP 5
 #define MAX_DOTS 60
-#define MAX_RANGE 20
+#define MAX_RANGE 30
 
 //max range
 
@@ -35,6 +36,8 @@ public:
 
     std::vector<geom::Point> trackline;
 
+    Kalman kf;
+
     Object();
 
     Object(int id, geom::Point pos) :   id(id), position(pos), updated(true), class_id(0),
@@ -45,6 +48,7 @@ public:
         g = rand() % 256;
         r = rand() % 256;
 
+        kf.init(pos.top, pos.left);
     }
     Object(int class_id, int id, geom::Point pos) :   id(id), position(pos), updated(true), class_id(0),
                                         maxDiss(MAX_DISS), minAppearance(MIN_APP), valid(false){
@@ -64,7 +68,7 @@ public:
                 position_old = position;
 
                 speed[speed.size()].module *= 0.9;
-                position.update(speed[speed.size()]);
+                // position.update(speed[speed.size()]);
                 trackline.push_back(position);
                 
                 if(trackline.size() > MAX_DOTS){
@@ -99,6 +103,15 @@ public:
         }
 
         position_old = position;
+
+        kf.predict(MAX_DISS - maxDiss + 1);
+        kf.update(p.top, p.left);
+
+        double top, left;
+        kf.getPosition(&top, &left);
+        p.top = (int) top;
+        p.left = (int) left;
+
         position = p;
 
         updated = true;
