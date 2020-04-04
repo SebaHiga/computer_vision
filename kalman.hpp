@@ -22,7 +22,7 @@ public:
     // Covariance matrix
     Eigen::Matrix<double, nx, nx> P;
     // Process covariance matrix
-    Eigen::Matrix<double, nx, nz> Q;
+    Eigen::Matrix<double, nx, nx> Q;
     // Uncertainty matrix
     Eigen::Matrix<double, nz, nz> R;
     // Observation matrix
@@ -47,7 +47,7 @@ public:
         Xn(idY) = inidY;
 
         // Prediction matrices
-        F .setIdentity();
+        F.setIdentity();
         G.setZero();
         Q.setIdentity();
         P.setIdentity();
@@ -59,8 +59,8 @@ public:
                 0, 5;
     }
 
-    void predict(double dt)
-    {
+    // Prediction method for object tracking
+    void predict(double dt){
         F(iX, idX) = dt;
         F(iY, idY) = dt;
 
@@ -72,23 +72,23 @@ public:
         G(idX, iX) = dt;
         G(idY, iY) = dt;
 
-        P  = F * P * F.transpose() + G * G.transpose() * 0.2; // 0.2 as acceleration covariance
+        Q = G * 0.2 *G.transpose();
+
+        P  = F * P * F.transpose() + Q; // 0.2 as acceleration covariance
     }
 
-    void update(double x, double y, double measVariance)
-    {
-        const double y = measValue - H * Xp;
-        const double S = H * Pp * H.transpose() + measVariance;
+    void update(double x, double y){
+        // K
+        K = (P * H.transpose()) * (H * P * H.transpose() + R).inverse();
 
-        const Vector K = Pp * H.transpose() * 1.0 / S;
+        // Xn
+        Zn <<   x,
+                y;
+        Xn = Xn + K * (Zn - H * Xn);
 
-        
-
-        Vector newX = Xp + K * y;
-        Matrix newP = (Matrix::Identity() - K * H) * Pp;
-
-        Pp = newP;
-        Xp = newX;
+        // P
+        Eigen::Matrix<double, nz, nx> I;
+        P = P * (I.Identity() - K * H);
     }
 
 private:
