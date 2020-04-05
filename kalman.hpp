@@ -81,22 +81,22 @@ public:
         Xn(iY)  = iniY;
         Xn(idY) = 0;
         this->dt = dt;
-    }
 
-    // Prediction method for object tracking
-    void predict(){
         F(iX, idX) = dt;
         F(iY, idY) = dt;
-
-        // Predict:   Xn+1 = F * Xn + G * Un
-        Xn = F * Xn;
-
         G(iX, iX) = 0.5 * dt * dt;
         G(iY, iY) = 0.5 * dt * dt;
         G(idX, iX) = dt;
         G(idY, iY) = dt;
 
         Q = G * 0.5 * G.transpose();
+
+    }
+
+    // Prediction method for object tracking
+    void predict(){
+        // Predict:   Xn+1 = F * Xn + G * Un
+        Xn = F * Xn;
 
         P  = F * P * F.transpose() + Q; 
     }
@@ -112,10 +112,10 @@ public:
 
         // P
         Eigen::Matrix<double, nx, nx> I;
-        I.Identity();
-        P = P * (I.Identity() - K * H);
+        I = I.Identity();
+        // P = P * (I.Identity() - K * H);
         // P = (I - K * H) * P * (I - K * H).transpose() + K * R * K.transpose();
-        // P = (I - K * H) * P;
+        P = P * (I - K * H);
     }
 
     void getPosition(double *x, double *y){
