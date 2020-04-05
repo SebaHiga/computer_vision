@@ -98,7 +98,7 @@ int main(int argc, char** argv){
                 }
                 for(int k = 1; k < track.objects[i].trackline_nonkf.size() - 1; k++){
                     cv::line(frame, track.objects[i].trackline_nonkf[k-1].cv_getPoint(),
-                        track.objects[i].trackline_nonkf[k].cv_getPoint(), Scalar(255, 255, 255), 1, 4);
+                        track.objects[i].trackline_nonkf[k].cv_getPoint(), Scalar(0, 0, 0), 1, 4);
                 }
             }
         }

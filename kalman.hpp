@@ -29,6 +29,8 @@ public:
     Eigen::Matrix<double, nz, nx> H;
     // Kalman gain matrix
     Eigen::Matrix<double, nx, nz> K;
+    // Identity matrix
+    Eigen::Matrix<double, nx, nx> I;
 
 
     // Variable indexes
@@ -36,9 +38,6 @@ public:
     static const int iY  = 1; // Y position
     static const int idX = 2; // X velocity
     static const int idY = 3; // Y velocity
-
-    // Time
-    double dt;
 
     Kalman(){
         // Prediction matrices
@@ -54,25 +53,27 @@ public:
                 0, 1;
     }
 
-    Kalman(double iniX, double inidX, double iniY, double inidY, double dt) : dt (dt){
+    Kalman(double iniX, double inidX, double iniY, double inidY){
         Xn(iX)  = iniX;
         Xn(idX) = inidX;
         Xn(iY)  = iniY;
         Xn(idY) = inidY;
 
         // Prediction matrices
-        F.setIdentity();
-        G.setZero();
-        Q.setIdentity();
+        F = F.setIdentity();
+        G = G.setZero();
+        Q = Q.setIdentity();
 
-        R.setIdentity();
+        R = R.setIdentity();
         R *= 5;
 
         P = P.setIdentity();
 
-        H.setZero();
+        H = H.setZero();
         H(iX, iX) = 1;
         H(iY, iY) = 1;
+
+        I = I.Identity();
     }
 
     void init(double iniX, double iniY, double dt){
@@ -80,42 +81,40 @@ public:
         Xn(idX) = 0;
         Xn(iY)  = iniY;
         Xn(idY) = 0;
-        this->dt = dt;
-    }
 
-    // Prediction method for object tracking
-    void predict(){
         F(iX, idX) = dt;
         F(iY, idY) = dt;
-
-        // Predict:   Xn+1 = F * Xn + G * Un
-        Xn = F * Xn;
 
         G(iX, iX) = 0.5 * dt * dt;
         G(iY, iY) = 0.5 * dt * dt;
         G(idX, iX) = dt;
         G(idY, iY) = dt;
 
-        Q = G * 0.5 * G.transpose();
+        Q = G * 1 * G.transpose();
+    }
+
+    // Prediction method for object tracking
+    void predict(){
+        // Predict:   Xn+1 = F * Xn + G * Un
+        Xn = F * Xn;
 
         P  = F * P * F.transpose() + Q; 
     }
 
     void update(int x, int y){
+        // Zn
+        Zn <<   x,
+                y;
+
         // K
         K = P * H.transpose() * (H * P * H.transpose() + R).inverse();
 
         // Xn
-        Zn <<   x,
-                y;
         Xn = Xn + K * (Zn - H * Xn);
 
         // P
-        Eigen::Matrix<double, nx, nx> I;
-        I.Identity();
-        P = P * (I.Identity() - K * H);
         // P = (I - K * H) * P * (I - K * H).transpose() + K * R * K.transpose();
-        // P = (I - K * H) * P;
+        P = P * (I - K * H);
     }
 
     void getPosition(double *x, double *y){

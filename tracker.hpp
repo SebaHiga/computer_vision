@@ -11,7 +11,7 @@ using namespace std;
 using namespace geom;
 
 #define MAX_DISS 60
-#define MIN_APP 1
+#define MIN_APP 5
 #define MAX_DOTS 120
 #define MAX_RANGE 120
 
