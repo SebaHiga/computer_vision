@@ -58,7 +58,12 @@ int main(int argc, char** argv){
 
         // getPointsFromObject(0, &points, &obj);
 
-        points.push_back( searchByColor(hsv, filtered, Scalar(109, 104, 54), Scalar(128, 255, 255)) );
+        geom::Point point = searchByColor(hsv, filtered, Scalar(109, 104, 54), Scalar(128, 255, 255));
+
+        rand()%2? point.top += rand()%15 : point.top -= rand()%15;
+        rand()%2? point.left += rand()%15 : point.left -= rand()%15;
+
+        points.push_back( point );
 
 
         track.update(&points);
@@ -71,13 +76,16 @@ int main(int argc, char** argv){
                 string str;
                 str = ss.str();
 
-                cv::Point speedLine(track.objects[i].getSpeedPoint().cv_getPoint());
+                // cv::Point speedLine(track.objects[i].getSpeedPoint().cv_getPoint());
 
-                cv::line(frame, track.objects[i].position.cv_getPoint(),
-                        speedLine, Scalar(0, 0, 255), 4);
+                // cv::line(frame, track.objects[i].position.cv_getPoint(),
+                //         speedLine, Scalar(0, 0, 255), 4);
+
+                cv::circle(frame, point.cv_getPoint(),
+                        3, Scalar(255, 255, 255), -1, 8);
 
                 cv::circle(frame, track.objects[i].position.cv_getPoint(),
-                        MAX_RANGE, Scalar(0, 0, 0), 2, 8);
+                        3, Scalar(0, 0, 255), -1, 8);
 
                 putText(frame, str,
                         cv::Point(
@@ -86,7 +94,11 @@ int main(int argc, char** argv){
 
                 for(int k = 1; k < track.objects[i].trackline.size() - 1; k++){
                     cv::line(frame, track.objects[i].trackline[k-1].cv_getPoint(),
-                        track.objects[i].trackline[k].cv_getPoint(), track.objects[i].getColor(), 3, 4);
+                        track.objects[i].trackline[k].cv_getPoint(), track.objects[i].getColor(), 2, 4);
+                }
+                for(int k = 1; k < track.objects[i].trackline_nonkf.size() - 1; k++){
+                    cv::line(frame, track.objects[i].trackline_nonkf[k-1].cv_getPoint(),
+                        track.objects[i].trackline_nonkf[k].cv_getPoint(), Scalar(255, 255, 255), 1, 4);
                 }
             }
         }

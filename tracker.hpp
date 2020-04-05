@@ -10,10 +10,10 @@
 using namespace std;
 using namespace geom;
 
-#define MAX_DISS 30
-#define MIN_APP 5
-#define MAX_DOTS 60
-#define MAX_RANGE 30
+#define MAX_DISS 60
+#define MIN_APP 1
+#define MAX_DOTS 120
+#define MAX_RANGE 120
 
 //max range
 
@@ -35,6 +35,7 @@ public:
     std::vector<geom::Vector> speed;
 
     std::vector<geom::Point> trackline;
+    std::vector<geom::Point> trackline_nonkf;
 
     Kalman kf;
 
@@ -48,7 +49,7 @@ public:
         g = rand() % 256;
         r = rand() % 256;
 
-        kf.init(pos.top, pos.left);
+        kf.init(pos.top, pos.left, 0.05);
     }
     Object(int class_id, int id, geom::Point pos) :   id(id), position(pos), updated(true), class_id(0),
                                         maxDiss(MAX_DISS), minAppearance(MIN_APP), valid(false){
@@ -69,6 +70,13 @@ public:
 
                 speed[speed.size()].module *= 0.9;
                 // position.update(speed[speed.size()]);
+                
+                double top, left;
+                kf.predict();
+                kf.getPosition(&top, &left);
+                position.top = (int) top;
+                position.left = (int) left;
+
                 trackline.push_back(position);
                 
                 if(trackline.size() > MAX_DOTS){
@@ -103,8 +111,9 @@ public:
         }
 
         position_old = position;
+        trackline_nonkf.push_back(p);
 
-        kf.predict(MAX_DISS - maxDiss + 1);
+        kf.predict();
         kf.update(p.top, p.left);
 
         double top, left;
@@ -121,6 +130,7 @@ public:
         trackline.push_back(p);
         if(trackline.size() > MAX_DOTS){
             trackline.erase(trackline.begin());
+            trackline_nonkf.erase(trackline_nonkf.begin());
         }
 
         if(minAppearance){

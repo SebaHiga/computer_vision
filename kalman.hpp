@@ -37,6 +37,9 @@ public:
     static const int idX = 2; // X velocity
     static const int idY = 3; // Y velocity
 
+    // Time
+    double dt;
+
     Kalman(){
         // Prediction matrices
         F.setIdentity();
@@ -47,11 +50,11 @@ public:
         H <<    1, 0, 0, 0,
                 0, 1, 0, 0;
 
-        R <<    5, 0,
-                0, 5;
+        R <<    1, 0,
+                0, 1;
     }
 
-    Kalman(double iniX, double inidX, double iniY, double inidY){
+    Kalman(double iniX, double inidX, double iniY, double inidY, double dt) : dt (dt){
         Xn(iX)  = iniX;
         Xn(idX) = inidX;
         Xn(iY)  = iniY;
@@ -61,24 +64,27 @@ public:
         F.setIdentity();
         G.setZero();
         Q.setIdentity();
-        P.setIdentity();
 
-        H <<    1, 0, 0, 0,
-                0, 1, 0, 0;
+        R.setIdentity();
+        R *= 5;
 
-        R <<    5, 0,
-                0, 5;
+        P = P.setIdentity();
+
+        H.setZero();
+        H(iX, iX) = 1;
+        H(iY, iY) = 1;
     }
 
-    void init(double iniX, double iniY){
+    void init(double iniX, double iniY, double dt){
         Xn(iX)  = iniX;
         Xn(idX) = 0;
         Xn(iY)  = iniY;
         Xn(idY) = 0;
+        this->dt = dt;
     }
 
     // Prediction method for object tracking
-    void predict(double dt){
+    void predict(){
         F(iX, idX) = dt;
         F(iY, idY) = dt;
 
@@ -90,24 +96,26 @@ public:
         G(idX, iX) = dt;
         G(idY, iY) = dt;
 
-        // Q = G * 0.2 *G.transpose();
+        Q = G * 0.5 * G.transpose();
 
-        P  = F * P * F.transpose() + Q; // 0.2 as acceleration covariance
+        P  = F * P * F.transpose() + Q; 
     }
 
     void update(int x, int y){
         // K
-        K = (P * H.transpose()) * (H * P * H.transpose() + R).inverse();
+        K = P * H.transpose() * (H * P * H.transpose() + R).inverse();
 
         // Xn
         Zn <<   x,
                 y;
         Xn = Xn + K * (Zn - H * Xn);
-        std::cout << Zn << std::endl;
 
         // P
         Eigen::Matrix<double, nx, nx> I;
+        I.Identity();
         P = P * (I.Identity() - K * H);
+        // P = (I - K * H) * P * (I - K * H).transpose() + K * R * K.transpose();
+        // P = (I - K * H) * P;
     }
 
     void getPosition(double *x, double *y){
